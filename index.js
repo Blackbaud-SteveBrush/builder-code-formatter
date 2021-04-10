@@ -49,16 +49,28 @@ module.exports = {
       const config = await getPrettierConfig();
 
       if (argv.check) {
-        const unformatted = [];
-        await processFiles(config, (file, contents) => {
-          const isFormatted = prettier.check(contents, config);
-          if (!isFormatted) {
-            unformatted.push(file);
+        try {
+          const unformatted = [];
+          await processFiles(config, (file, contents) => {
+            const isFormatted = prettier.check(contents, config);
+            if (!isFormatted) {
+              unformatted.push(file.replace(process.cwd(), ''));
+            }
+          });
+          if (unformatted.length) {
+            throw new Error(`
+*========================================*
+| The following files are not formatted: |
+*========================================*
+  --> ${unformatted.join('\n  --> ')}\n`);
+          } else {
+            console.log('All files formatted correctly.');
           }
-        });
-        if (unformatted.length) {
-          throw new Error(`Some of the files were not formatted!\n${unformatted.join('\n')}\n\n`);
+        } catch (err) {
+          console.error(err.message);
+          process.exit(1);
         }
+
         return;
       }
 
@@ -89,13 +101,13 @@ module.exports = {
       });
 
       console.log(`
-====================================
-SKY UX Format Results:
-====================================
-Num. failed:    ${numFailed}
-Num. ignored:   ${numIgnored}
-Num. succeeded: ${numSucceeded}
-------------------------------------
+*========================================*
+| Format results                         |
+*========================================*
+  Num. failed:    ${numFailed}
+  Num. ignored:   ${numIgnored}
+  Num. succeeded: ${numSucceeded}
+*----------------------------------------*
 `);
     }
   }
