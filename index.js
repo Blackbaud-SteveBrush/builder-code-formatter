@@ -27,7 +27,6 @@ function getFileInfo(file) {
 function processFiles(config, callback) {
   const files = getProjectFiles();
   const promises = files.map(async (file) => {
-
     const info = await getFileInfo(file);
     if (info.ignored) {
       return;
@@ -43,72 +42,76 @@ function processFiles(config, callback) {
   return Promise.all(promises);
 }
 
+async function checkFiles(config) {
+  try {
+    const unformatted = [];
+    await processFiles(config, (file, contents) => {
+      const isFormatted = prettier.check(contents, config);
+      if (!isFormatted) {
+        unformatted.push(file.replace(process.cwd(), ''));
+      }
+    });
+    if (unformatted.length) {
+      throw new Error(`
+*========================================*
+| The following files are not formatted: |
+*========================================*
+--> ${unformatted.join('\n  --> ')}\n`);
+    } else {
+      console.log('All files formatted correctly.');
+    }
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+}
+
+async function formatFiles(config) {
+  let numFailed = 0;
+  let numIgnored = 0;
+  let numSucceeded = 0;
+
+  await processFiles(config, (file, contents) => {
+    try {
+      const formatted = prettier.format(contents, config);
+
+      if (contents !== formatted) {
+        fs.writeFileSync(file, formatted, { encoding: 'utf-8' });
+        console.log(`Successfully formatted file ${file}`);
+        numSucceeded++;
+      } else {
+        numIgnored++;
+        console.log(`File already formatted ${file}`);
+      }
+    } catch (err) {
+      numFailed++;
+      console.error(`Failed to format file: ${file}`);
+      console.error(err);
+    }
+  });
+
+  console.log(`
+*========================================*
+| Format results                         |
+*========================================*
+Num. failed:    ${numFailed}
+Num. ignored:   ${numIgnored}
+Num. succeeded: ${numSucceeded}
+*----------------------------------------*
+`);
+}
+
 module.exports = {
   runCommand: async (command, argv) => {
     if (command === 'format') {
       const config = await getPrettierConfig();
 
       if (argv.check) {
-        try {
-          const unformatted = [];
-          await processFiles(config, (file, contents) => {
-            const isFormatted = prettier.check(contents, config);
-            if (!isFormatted) {
-              unformatted.push(file.replace(process.cwd(), ''));
-            }
-          });
-          if (unformatted.length) {
-            throw new Error(`
-*========================================*
-| The following files are not formatted: |
-*========================================*
-  --> ${unformatted.join('\n  --> ')}\n`);
-          } else {
-            console.log('All files formatted correctly.');
-          }
-        } catch (err) {
-          console.error(err.message);
-          process.exit(1);
-        }
-
+        await checkFiles(config);
         return;
       }
 
-      let numFailed = 0;
-      let numIgnored = 0;
-      let numSucceeded = 0;
-
-      await processFiles(config, (file, contents) => {
-        try {
-          const formatted = prettier.format(
-            contents,
-            config
-          );
-
-          if (contents !== formatted) {
-            fs.writeFileSync(file, formatted, { encoding: 'utf-8' });
-            console.log(`Successfully formatted file ${file}`);
-            numSucceeded++;
-          } else {
-            numIgnored++;
-            console.log(`File already formatted ${file}`);
-          }
-        } catch (err) {
-          numFailed++;
-          console.error(`Failed to format file: ${file}`);
-          console.error(err);
-        }
-      });
-
-      console.log(`
-*========================================*
-| Format results                         |
-*========================================*
-  Num. failed:    ${numFailed}
-  Num. ignored:   ${numIgnored}
-  Num. succeeded: ${numSucceeded}
-*----------------------------------------*
-`);
+      await formatFiles(config);
     }
   }
 };
