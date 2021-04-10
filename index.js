@@ -2,9 +2,13 @@ const fs = require('fs-extra');
 const glob = require('glob');
 const path = require('path');
 const prettier = require('prettier');
+const vscode = require('./lib/vscode');
 
 async function getPrettierConfig() {
-  const configFilePath = path.join(__dirname, 'prettier/.prettierrc.json');
+  const configFilePath = path.join(
+    __dirname,
+    'config/prettier/.prettierrc.json'
+  );
   const config = await prettier.resolveConfig(configFilePath);
   return config;
 }
@@ -40,6 +44,11 @@ function processFiles(config, callback) {
   });
 
   return Promise.all(promises);
+}
+
+function setupAutosaveFunctionality() {
+  vscode.modifySettingsFile('settings.json');
+  vscode.modifySettingsFile('extensions.json');
 }
 
 async function checkFiles(config) {
@@ -108,6 +117,11 @@ module.exports = {
 
       if (argv.check) {
         await checkFiles(config);
+        return;
+      }
+
+      if (argv.setupAutosave) {
+        setupAutosaveFunctionality();
         return;
       }
 
