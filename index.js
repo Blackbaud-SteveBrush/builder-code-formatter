@@ -47,8 +47,12 @@ function processFiles(config, callback) {
 }
 
 function setupAutosaveFunctionality() {
+  console.log(
+    'Modifying local .vcode settings to setup autosave functionality.'
+  );
   vscode.modifySettingsFile('settings.json');
   vscode.modifySettingsFile('extensions.json');
+  console.log('Autosave functionality setup successfully.');
 }
 
 async function checkFiles(config) {
@@ -120,8 +124,26 @@ module.exports = {
         return;
       }
 
-      if (argv.setupAutosave) {
+      if (argv['setup-autosave']) {
         setupAutosaveFunctionality();
+        return;
+      }
+
+      if (argv['help']) {
+        console.log(`
+*=====================================================================*
+* SKY UX Format                                                       *
+* Usage: skyux format [options]                                       *
+*=====================================================================*
+
+Formats local source code.
+
+--check
+  Throws an error if any source file is not formatted correctly.
+
+--setup-autosave
+  Adds the appropriate configuration to automatically format code when a file is saved.
+`);
         return;
       }
 
