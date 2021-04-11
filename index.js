@@ -69,9 +69,9 @@ async function checkFiles(config) {
 *========================================*
 | The following files are not formatted: |
 *========================================*
---> ${unformatted.join('\n  --> ')}\n`);
+  --> ${unformatted.join('\n  --> ')}\n`);
     } else {
-      console.log('All files formatted correctly.');
+      console.log('All files are formatted correctly.');
     }
   } catch (err) {
     console.error(err.message);
@@ -107,10 +107,27 @@ async function formatFiles(config) {
 *========================================*
 | Format results                         |
 *========================================*
-Num. failed:    ${numFailed}
-Num. ignored:   ${numIgnored}
-Num. succeeded: ${numSucceeded}
+  Num. failed:    ${numFailed}
+  Num. ignored:   ${numIgnored}
+  Num. succeeded: ${numSucceeded}
 *----------------------------------------*
+`);
+}
+
+function logHelpInfo() {
+  console.log(`
+*=====================================================================*
+| SKY UX Format                                                       |
+| Usage: skyux format [options]                                       |
+*=====================================================================*
+
+  Formats local source code.
+
+  --check
+    Throws an error if any source file is not formatted correctly.
+
+  --setup-autosave
+    Adds the appropriate configuration to automatically format code when a file is saved.
 `);
 }
 
@@ -130,20 +147,7 @@ module.exports = {
       }
 
       if (argv['help']) {
-        console.log(`
-*=====================================================================*
-* SKY UX Format                                                       *
-* Usage: skyux format [options]                                       *
-*=====================================================================*
-
-Formats local source code.
-
---check
-  Throws an error if any source file is not formatted correctly.
-
---setup-autosave
-  Adds the appropriate configuration to automatically format code when a file is saved.
-`);
+        logHelpInfo();
         return;
       }
 
