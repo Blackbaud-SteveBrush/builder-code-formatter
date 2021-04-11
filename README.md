@@ -18,6 +18,6 @@ Formats all source files.
 
 Throws an error if any source file is not formatted correctly.
 
-#### `skyux format --setup-autosave`
+#### `skyux format --setup`
 
 Adds the appropriate configuration to automatically format code when a file is saved.
